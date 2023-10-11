@@ -78,7 +78,7 @@ export default function Home() {
           {loading ? (
             <LoadingOverlay
               enabled={loading}
-              bgColor="bg-gray-800"
+              bgColor="#b80823"
               showSpinner={true}
               spinnerColor="#FFFFFF"
             />
