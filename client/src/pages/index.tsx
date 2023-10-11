@@ -1,12 +1,36 @@
 // importing google font for NextJS
+import LoadingOverlay from '@/components/LoadingOverlay';
+import { getJSONData } from '@/tools/Toolkit';
+import { Note, Orders, Order, Topping } from '@/tools/orders.model';
 import { Griffy } from 'next/font/google';
 const griffy = Griffy({weight: "400", subsets: ['latin']});
+
+import React, { useState } from 'react';
 
 export default function Home() {
   // retrieve server sided script
   const RETRIEVE_SCRIPT:string = "https://www.seanmorrow.ca/_lessons/retrieveOrder.php";
+  const [loading, setLoading] = useState(false);
+  const [orders, setOrders] = useState<Orders>({ orders: [] });
 
-  
+  // ----------------------------- event handlers
+  const onResponse = (data:Orders) => {
+    console.log(data);
+    setOrders(data);
+    setLoading(false);
+  };
+
+  const onError = (message:string) => {
+    console.log(`*** Error retrieving pizza order data : ( | ${message}`); 
+    setLoading(false); 
+  }; 
+
+  const getOrders = (e:any) => {
+    setLoading(true);
+    // fetch the data from the api 
+    getJSONData(RETRIEVE_SCRIPT, onResponse, onError); 
+
+  };
 
 
   // ---------------------------- rendering to DOM
@@ -37,7 +61,7 @@ export default function Home() {
           <div className="text-accent text-3xl font-bold mb-2.5">Welcome loyal pizza dispatcher....</div>Click the &quot;Get Orders&quot; button below to view all current orders that need to be delivered.
           <div>
               <button 
-                className="bg-accent border-none rounded-md p-2.5 text-white hover:bg-greyContent mt-5">Get Orders</button>
+                className="bg-accent border-none rounded-md p-2.5 text-white hover:bg-greyContent mt-5" onClick={getOrders}>Get Orders</button>
           </div>
         </div>
         <div className="shrink-0 text-lg text-right text-greyContent hidden md:block">
@@ -51,8 +75,46 @@ export default function Home() {
       <div className="bg-greyAccent p-10">
 
         <div id="output" className="divide-dashed divide-y-2 divide-accent">
-
-          <>No orders retrieved...</>
+          {loading ? (
+            <LoadingOverlay
+              enabled={loading}
+              bgColor="bg-gray-800"
+              showSpinner={true}
+              spinnerColor="#FFFFFF"
+            />
+          ) : orders.orders.length > 0 ? (
+            orders.orders.map((order: Order, index: number) => (
+              <div className='pt-4 pb-4' key={order.id}>
+                <h3 className='text-accent text-xl font-bold'>{order.name}</h3>
+                <p>Address: {order.address}</p>
+                <p>City: {order.city}</p>
+                <p>Size: {order.size}</p>
+                <p>Delivered: {order.delivered}</p>
+                <p>Toppings:</p>
+                <ul className="flex space-x-2">
+                  {order.toppings.map((topping: Topping, toppingIndex: number) => (
+                    // <li key={toppingIndex}>{topping.topping}</li>
+                    <li key={toppingIndex} style={{ fontStyle: 'italic' }}>
+                      {topping.topping}
+                      {toppingIndex !== order.toppings.length - 1 && " | "}
+                    </li>
+                  ))}
+                </ul>
+                <p>Notes:</p>
+                <ul className="flex space-x-2">
+                  {order.notes.map((note: Note, noteIndex: number) => (
+                    // <li key={noteIndex}>{note.note}</li>
+                    <li key={noteIndex} style={{ fontStyle: 'italic' }}>
+                      {note.note}
+                      {noteIndex !== order.notes.length - 1 && " | "}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          ) : (
+            <>No orders retrieved...</>
+          )}
 
         </div>
       </div>
